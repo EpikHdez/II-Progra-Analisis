@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1446583433 source:/home/erick/Documentos/II-Progra-Analisis/Paralelo/main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<mpi.h>
+
