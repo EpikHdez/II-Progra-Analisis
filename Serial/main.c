@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <stdio_ext.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,12 +46,32 @@ int needleman_Wunsch(char h1[], char h2[])
 int main()
 {
     char h1[1000], h2[1000];
-    char userAnswer[1];
+    char userAnswer[2];
+    int answer = 0;
     bool keepIt = true;
 
     while(keepIt)
     {
+        printf("Ingrese la primera cadena a comparar: ");
+        __fpurge(stdin);
+        fgets(h1, sizeof(h1), stdin);
 
+        printf("Ingrese la segunda cadena a comparar: ");
+        __fpurge(stdin);
+        fgets(h2, sizeof(h2), stdin);
+
+        printf("Calculando...\n");
+        answer = needleman_Wunsch(h1, h2);
+        printf("El resultado es: %d\n", answer);
+
+        printf("\nDesea comparar otras hileras? (y/n): ");
+        __fpurge(stdin);
+        fgets(userAnswer, sizeof(userAnswer), stdin);
+
+        if(!strcmp("n", userAnswer) || !strcmp("N", userAnswer))
+            keepIt = false;
+
+        printf("\n\n");
     }
 
     return 0;
