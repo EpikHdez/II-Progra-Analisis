@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1446518975 source:/home/erick/Documentos/II-Progra-Analisis/Serial/main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
