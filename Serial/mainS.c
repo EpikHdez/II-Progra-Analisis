@@ -7,6 +7,20 @@
 
 typedef short bool;
 
+int readFile(char *destiny, char fileName[])
+{
+    char buffer[2048];
+    FILE *file = fopen(fileName, "r");
+
+    if(!file)
+        return 1;
+
+    fgets(buffer, sizeof(buffer), file);
+    strcpy(destiny, buffer);
+
+    return 0;
+}
+
 int max(int x, int y, int z)
 {
     int m1 = x > y ? x : y;
@@ -43,36 +57,17 @@ int needleman_Wunsch(char h1[], char h2[])
     return F[length1 - 1][length2 - 1];
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    char h1[1000], h2[1000];
-    char userAnswer[2];
+    char h1[2048], h2[2048];
     int answer = 0;
-    bool keepIt = true;
 
-    while(keepIt)
-    {
-        printf("Ingrese la primera cadena a comparar: ");
-        __fpurge(stdin);
-        fgets(h1, sizeof(h1), stdin);
+    readFile(h1, argv[1]);
+    readFile(h2, argv[2]);
 
-        printf("Ingrese la segunda cadena a comparar: ");
-        __fpurge(stdin);
-        fgets(h2, sizeof(h2), stdin);
-
-        printf("Calculando...\n");
-        answer = needleman_Wunsch(h1, h2);
-        printf("El resultado es: %d\n", answer);
-
-        printf("\nDesea comparar otras hileras? (y/n): ");
-        __fpurge(stdin);
-        fgets(userAnswer, sizeof(userAnswer), stdin);
-
-        if(!strcmp("n", userAnswer) || !strcmp("N", userAnswer))
-            keepIt = false;
-
-        printf("\n\n");
-    }
+    printf("Calculando...\n");
+    answer = needleman_Wunsch(h1, h2);
+    printf("El resultado es: %d\n\n", answer);
 
     return 0;
 }

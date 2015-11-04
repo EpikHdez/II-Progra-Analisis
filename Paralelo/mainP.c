@@ -3,6 +3,21 @@
 #include <string.h>
 #include <mpi.h>
 
+int readFile(char *destiny, char fileName[])
+{
+    unsigned char buffer[2048];
+    FILE *file = fopen(fileName, "r");
+
+    if(!file)
+        return 1;
+
+    fgets(buffer, sizeof(buffer), file);
+    strcpy(destiny, buffer);
+
+    fclose(file);
+    return 0;
+}
+
 int max(int x, int y, int z)
 {
     int m1 = x > y ? x : y;
@@ -41,7 +56,12 @@ int needlemanWunsch(char h1[], char h2[])
 int main(int argc, char *argv[])
 {
     int rank, size;
-    char message[12];
+    char message[15], h1[2048], h2[2048];
+
+    readFile(h1, argv[1]);
+    readFile(h2, argv[2]);
+
+    printf("%s\n%s\n", h1, h2);
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -49,17 +69,17 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        strcpy(message, "Hola mundo!");
+        strcpy(message, "Hola mundo");
         MPI_Send(message, sizeof(message), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
     }
-    if(rank == 1)
+    if(rank >= 1)
     {
-        MPI_Recv(message, sizeof(message), MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("Se recibio en %d el mensaje: %s desde el procesador %d.\n", rank, message, 0);
-    }
-    if(rank >= 2)
-    {
-        printf("Yo, el proceso %d no hago nada.\n", rank);
+        MPI_Recv(message, sizeof(message), MPI_CHAR, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Se recibio en %d el mensaje: %s desde el procesador %d.\n", rank, message, (rank-1));
+        strcat(message, "o");
+
+        if(rank < (size-1))
+            MPI_Send(message, sizeof(message), MPI_CHAR, (rank+1), 0, MPI_COMM_WORLD);
     }
 
     MPI_Finalize();
