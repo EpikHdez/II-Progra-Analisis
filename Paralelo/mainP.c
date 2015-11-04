@@ -3,10 +3,13 @@
 #include <string.h>
 #include <mpi.h>
 
-#define false 0
-#define true 1
+int max(int x, int y, int z)
+{
+    int m1 = x > y ? x : y;
+    int m2 = y > z ? y : z;
 
-typedef short bool;
+    return m1 > m2 ? m1 : m2;
+}
 
 int main(int argc, char **argv)
 {
@@ -29,7 +32,7 @@ int main(int argc, char **argv)
     }
     if(rank >= 2)
     {
-        printf("Yo el proceso %d no hago nada.\n", rank);
+        printf("Yo, el proceso %d no hago nada.\n", rank);
     }
 
     MPI_Finalize();
