@@ -11,7 +11,34 @@ int max(int x, int y, int z)
     return m1 > m2 ? m1 : m2;
 }
 
-int main(int argc, char **argv)
+int needlemanWunsch(char h1[], char h2[])
+{
+    int i, j, match, insert, erase;
+    int length1 = strlen(h1);
+    int length2 = strlen(h2);
+    int F[length1][length2];
+
+    for(i = 0; i < length1; i++)
+        F[i, 0] = -i;
+
+    for(j = 0; j < length2; j++)
+        F[0, j] = -j;
+
+    for(i = 1; i < length1; i++)
+    {
+        for(j = 1; j < length2; j++)
+        {
+            match = F[i-1, j-1] + (h1[i] == h2[j] ? 1 : -1);
+            insert = F[i-1][j] - 1;
+            erase = F[i][j-1] - 1;
+            F[i][j] = max(match, insert, erase);
+        }
+    }
+
+    return F[length1-1][length2-1];
+}
+
+int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
 
