@@ -3,6 +3,9 @@
 #include <string.h>
 #include <mpi.h>
 
+/*Metodo para la lectura de los archivos que contienen la cadena da caracteres que se van a comparar.
+Solamente se lee la primera linea, por lo que toda la hilera debe estar en la primera linea y 
+con un máximo de 2048 carácteres.*/
 int readFile(char *dest, char fileName[])
 {
     unsigned char buffer[2048];
@@ -19,6 +22,26 @@ int readFile(char *dest, char fileName[])
     return 0;
 }
 
+void strcut(char *dest, char *src, int startPoint)
+{
+    int i, j;
+
+    i = startPoint;
+    j = 0;
+
+    for(i; i < strlen(src); i++)
+        dest[j++] = src[i];
+
+    dest[j] = '\0';
+}
+
+void getSubStr(char *dest, char *str, int size)
+{
+    strncpy(dest, str, size);
+    strcut(str, str, size);
+}
+
+//Obtener el maximo de tres valores
 int max(int x, int y, int z)
 {
     int m1 = x > y ? x : y;
@@ -27,7 +50,7 @@ int max(int x, int y, int z)
     return m1 > m2 ? m1 : m2;
 }
 
-int needlemanWunsch(char h1[], char h2[])
+void needlemanWunsch(char h1[], char h2[])
 {
     int i, j, match, insert, erase;
     int length1 = strlen(h1);
@@ -50,28 +73,8 @@ int needlemanWunsch(char h1[], char h2[])
             F[i][j] = max(match, insert, erase);
         }
     }
-
-    return F[length1-1][length2-1];
 }
 
-void strcut(char *dest, char *src, int startPoint)
-{
-    int i, j;
-
-    i = startPoint;
-    j = 0;
-
-    for(i; i < strlen(src); i++)
-        dest[j++] = src[i];
-
-    dest[j] = '\0';
-}
-
-void getSubStr(char *dest, char str[], int size)
-{
-    strncpy(dest, str, size);
-    strcut(str, str, size);
-}
 
 int main(int argc, char *argv[])
 {
@@ -86,7 +89,7 @@ int main(int argc, char *argv[])
     {
         readFile(h1Complete, argv[1]);
         readFile(h2Complete, argv[2]);
-        printf("%s\n%s\n", h1Complete, h2Complete);
+        printf("Las cadenas completas son: %s y %s\n", h1Complete, h2Complete);
 
         blockA = (strlen(h1Complete) / size);
         blockB = (strlen(h2Complete) / size);
@@ -95,7 +98,7 @@ int main(int argc, char *argv[])
         getSubStr(h1, h1Complete, blockA);
         getSubStr(h2, h2Complete, blockB);
 
-        printf("%s\n%s\n", h1, h2);
+        printf("Se leyo en %d las cadenas: %s y %s\n", rank, h1, h2);
 
         // char h1[blockA];
         // char h2[blockB];
@@ -121,7 +124,7 @@ int main(int argc, char *argv[])
         MPI_Recv(h1Complete, sizeof(h1Complete), MPI_CHAR, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(h2Complete, sizeof(h2Complete), MPI_CHAR, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        printf("Se recibio en %d los strings: %s y %s desde el procesador %d.\n", rank, h1Complete, h2Complete, (rank-1));
+        printf("Se recibio en %d los strings: %s y %s desde el proceso %d.\n", rank, h1Complete, h2Complete, (rank-1));
 
         char h1[blockA], h2[blockB];
         getSubStr(h1, h1Complete, blockA);
