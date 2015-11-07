@@ -29,7 +29,6 @@ int max(int x, int y, int z)
 int needleman_Wunsch(char h1[], char h2[])
 {
     int i, j, match, insert, erase;
-
     int length1 = strlen(h1);
     int length2 = strlen(h2);
     int F[length1][length2];
@@ -51,7 +50,7 @@ int needleman_Wunsch(char h1[], char h2[])
         }
     }
 
-    return F[length1 - 1][length2 - 1];
+    return F[length1-1][length2-1];
 }
 
 int main(int argc, char *argv[])

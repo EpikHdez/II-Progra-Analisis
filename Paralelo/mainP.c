@@ -41,6 +41,7 @@ void getSubStr(char *dest, char *str, int size)
 {
     strncpy(dest, str, size);
     strcut(str, str, size);
+    dest[size] = '\0';
 }
 
 //Obtener el maximo de tres valores
@@ -52,11 +53,12 @@ int max(int x, int y, int z)
     return m1 > m2 ? m1 : m2;
 }
 
-void needlemanWunsch(int *F, char h1[], char h2[])
+void needlemanWunsch(int dest[], char h1[], char h2[])
 {
     int i, j, match, insert, erase;
-    int length1 = strlen(h1);
-    int length2 = strlen(h2);
+    int length1 = (strlen(h1) + 1);
+    int length2 = (strlen(h2) + 1);
+    int F[length1][length2];
 
     for(i = 0; i < length1; i++)
         F[i][0] = -i;
@@ -74,12 +76,15 @@ void needlemanWunsch(int *F, char h1[], char h2[])
             F[i][j] = max(match, insert, erase);
         }
     }
+
+    for(i = 1; i < length1; i++)
+        dest[i-1] = F[i][length2-1];
 }
 
 
 int main(int argc, char *argv[])
 {
-    int rank, size, blockA, blockB;
+    int rank, size, blockA, blockB, i;
     char h1Complete[MAX_CHAR_SIZE], h2Complete[MAX_CHAR_SIZE];
 
     MPI_Init(&argc, &argv);
@@ -98,30 +103,23 @@ int main(int argc, char *argv[])
 
         getSubStr(h1, h1Complete, blockA);
         getSubStr(h2, h2Complete, blockB);
-        int F[strlen(h1)][strlen(h2)];
-
+        int sendArr[strlen(h1)];
         printf("Se leyo en %d las cadenas: %s y %s\n", rank, h1, h2);
-
-        needlemanWunsch(&F, h1, h2);
-
-        // char h1[blockA];
-        // char h2[blockB];
-        // printf("%d\n%d\n", blockA, blockB);
-
-        // strncpy(h1, h1Complete, blockA);
-        // strncpy(h2, h2Complete, blockB);
-        // printf("%s\n%s\n", h1, h2);
-
-        // strcut(h1, h1, blockA);
-        // strcut(h2, h2, blockB);
 
         MPI_Send(&blockA, sizeof(blockA), MPI_INT, 1, 0, MPI_COMM_WORLD);
         MPI_Send(&blockB, sizeof(blockB), MPI_INT, 1, 0, MPI_COMM_WORLD);
         MPI_Send(h1Complete, sizeof(h1Complete), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
         MPI_Send(h2Complete, sizeof(h2Complete), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
+
+        needlemanWunsch(sendArr, h1, h2);
+
+        for(i = 0; i < strlen(h1); i++)
+            printf("%d - ", sendArr[i]);
+
+        printf("\n\n");
     }
 
-    if(rank >= 1)
+    if(rank > 0)
     {
         MPI_Recv(&blockA, sizeof(blockA), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&blockB, sizeof(blockB), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
