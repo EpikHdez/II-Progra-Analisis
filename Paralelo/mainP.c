@@ -3,12 +3,14 @@
 #include <string.h>
 #include <mpi.h>
 
+#define MAX_CHAR_SIZE 2048
+
 /*Metodo para la lectura de los archivos que contienen la cadena da caracteres que se van a comparar.
 Solamente se lee la primera linea, por lo que toda la hilera debe estar en la primera linea y 
 con un máximo de 2048 carácteres.*/
 int readFile(char *dest, char fileName[])
 {
-    unsigned char buffer[2048];
+    unsigned char buffer[MAX_CHAR_SIZE];
     FILE *file = fopen(fileName, "r");
 
     if(!file)
@@ -50,12 +52,11 @@ int max(int x, int y, int z)
     return m1 > m2 ? m1 : m2;
 }
 
-void needlemanWunsch(char h1[], char h2[])
+void needlemanWunsch(int *F, char h1[], char h2[])
 {
     int i, j, match, insert, erase;
     int length1 = strlen(h1);
     int length2 = strlen(h2);
-    int F[length1][length2];
 
     for(i = 0; i < length1; i++)
         F[i][0] = -i;
@@ -79,7 +80,7 @@ void needlemanWunsch(char h1[], char h2[])
 int main(int argc, char *argv[])
 {
     int rank, size, blockA, blockB;
-    char h1Complete[2048], h2Complete[2048];
+    char h1Complete[MAX_CHAR_SIZE], h2Complete[MAX_CHAR_SIZE];
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -97,8 +98,11 @@ int main(int argc, char *argv[])
 
         getSubStr(h1, h1Complete, blockA);
         getSubStr(h2, h2Complete, blockB);
+        int F[strlen(h1)][strlen(h2)];
 
         printf("Se leyo en %d las cadenas: %s y %s\n", rank, h1, h2);
+
+        needlemanWunsch(&F, h1, h2);
 
         // char h1[blockA];
         // char h2[blockB];
