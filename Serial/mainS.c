@@ -2,14 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define false 0
-#define true 1
-
-typedef short bool;
+#define MAX_CHAR_SIZE 2048
 
 int readFile(char *destiny, char fileName[])
 {
-    char buffer[2048];
+    char buffer[MAX_CHAR_SIZE];
     FILE *file = fopen(fileName, "r");
 
     if(!file)
@@ -59,7 +56,7 @@ int needleman_Wunsch(char h1[], char h2[])
 
 int main(int argc, char *argv[])
 {
-    char h1[2048], h2[2048];
+    char h1[MAX_CHAR_SIZE], h2[MAX_CHAR_SIZE];
     int answer = 0;
 
     readFile(h1, argv[1]);
