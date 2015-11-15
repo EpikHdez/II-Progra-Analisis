@@ -53,32 +53,131 @@ int max(int x, int y, int z)
     return m1 > m2 ? m1 : m2;
 }
 
-void needlemanWunsch(int dest[], char h1[], char h2[])
+void needlemanWunsch(char h1[], char h2[], int rank, int size, int blockA)
 {
-    int i, j, match, insert, erase;
+    int i, j, k, match, insert, erase;
     int length1 = (strlen(h1) + 1);
     int length2 = (strlen(h2) + 1);
+    int reference[blockA];
     int F[length1][length2];
 
-    for(i = 0; i < length1; i++)
-        F[i][0] = -i;
+    printf("En proceso %d: h1 = %s y h2 = %s\n", rank, h1, h2);
 
-    for(j = 0; j < length2; j++)
-        F[0][j] = -j;
-
-    for(i = 1; i < length1; i++)
+    if(rank == 0)
     {
-        for(j = 1; j < length2; j++)
+        for(i = 0; i < length1; i++)
+            F[i][0] = -i;
+
+        for(j = 0; j < length2; j++)
+            F[0][j] = -j;
+
+        MPI_Send(&j, sizeof(j), MPI_INT, 1, 0, MPI_COMM_WORLD);
+        k = 1;
+
+        for(i = 1; i < length1; i++)
         {
-            match = F[i-1][j-1] + (h1[i] == h2[j] ? 1 : -1);
-            insert = F[i-1][j] - 1;
-            erase = F[i][j-1] - 1;
-            F[i][j] = max(match, insert, erase);
+            for(j = 1; j < length2; j++)
+            {
+                match = F[i-1][j-1] + (h1[i-1] == h2[j-1] ? 1 : -1);
+                insert = F[i-1][j] - 1;
+                erase = F[i][j-1] - 1;
+                F[i][j] = max(match, insert, erase);
+            }
+
+            if(k == blockA)
+            {
+                k = (i-blockA);
+
+                for(j = 0; j <= blockA; j++)
+                    reference[j] = F[k++][length2-1];
+
+                k = 0;
+                MPI_Send(reference, sizeof(reference), MPI_INT, 1, 0, MPI_COMM_WORLD);
+            }
+
+            k++;
+        }
+
+        //Mostrar la matriz
+        for(i = 0; i < length1; i++)
+        {
+            for(j = 0; j < length2; j++)
+                printf("%d | ", F[i][j]);
+
+            printf("\n");
         }
     }
+    else
+    {
+        MPI_Recv(&j, sizeof(j), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-    for(i = 1; i < length1; i++)
-        dest[i-1] = F[i][length2-1];
+        for(i = 1; i < length2; i++)
+            F[0][i] = -j++;
+
+        if(rank < (size-1))
+            MPI_Send(&j, sizeof(j), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
+
+        for(i = 1; i < length1; i+=blockA)
+        {
+            MPI_Recv(reference, sizeof(reference), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            k = (i-1);
+            for(j = 0; j <= blockA; j++)
+                F[k++][0] = reference[j];
+
+            for(j = i; j <= (blockA*i); j++)
+            {
+                for(k = 1; k < length2; k++)
+                {
+                    match = F[j-1][k-1] + (h1[j-1] == h2[k-1] ? 1 : -1);
+                    insert = F[j-1][k] - 1;
+                    erase = F[j][k-1] - 1;
+                    F[j][k] = max(match, insert, erase);
+                }
+            }
+
+            if(rank < (size-1))
+            {
+                k = (i-1);
+                for(j = 0; j <= blockA; j++)
+                    reference[j] = F[k++][length2-1];
+
+                MPI_Send(reference, sizeof(reference), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
+            }
+        }
+
+        for(i = 0; i < length1; i++)
+        {
+            for(j = 0; j < length2; j++)
+                printf("%d | ", F[i][j]);
+
+            printf("\n");
+        }
+
+
+        // MPI_Recv(&j, sizeof(j), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        // MPI_Recv(reference, sizeof(reference), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        // for(i = 0; i <= blockA; i++)
+        //     F[i][0] = reference[i];
+
+        // for(i = 1; i < length2; i++)
+        //     F[0][i] = -j++;
+
+        // if(rank < (size-1))
+        // {
+        //     MPI_Send(&j, sizeof(j), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
+        // }
+
+        // //Mostrar la matriz
+        // for(i = 0; i < length1; i++)
+        // {
+        //     for(j = 0; j < length2; j++)
+        //         printf("%d | ", F[i][j]);
+
+        //     printf("\n");
+        // }
+    }
 }
 
 
@@ -93,52 +192,44 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        readFile(h1Complete, argv[1]);
-        readFile(h2Complete, argv[2]);
-        printf("Las cadenas completas son: %s y %s\n", h1Complete, h2Complete);
+        if (readFile(h1Complete, argv[1]) != 0 || readFile(h2Complete, argv[2]) != 0)
+        {
+            printf("No se pudieron leer los archivos de datos, intentelo de nuevo.\n");
+            return 1;
+        }
 
         blockA = (strlen(h1Complete) / size);
         blockB = (strlen(h2Complete) / size);
-        char h1[blockA], h2[blockB];
+        char h2[blockB];
 
-        getSubStr(h1, h1Complete, blockA);
         getSubStr(h2, h2Complete, blockB);
-        int sendArr[strlen(h1)];
-        printf("Se leyo en %d las cadenas: %s y %s\n", rank, h1, h2);
 
         MPI_Send(&blockA, sizeof(blockA), MPI_INT, 1, 0, MPI_COMM_WORLD);
         MPI_Send(&blockB, sizeof(blockB), MPI_INT, 1, 0, MPI_COMM_WORLD);
         MPI_Send(h1Complete, sizeof(h1Complete), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
         MPI_Send(h2Complete, sizeof(h2Complete), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
 
-        needlemanWunsch(sendArr, h1, h2);
-
-        for(i = 0; i < strlen(h1); i++)
-            printf("%d - ", sendArr[i]);
-
-        printf("\n\n");
+        needlemanWunsch(h1Complete, h2, rank, size, blockA);
     }
-
-    if(rank > 0)
+    else
     {
         MPI_Recv(&blockA, sizeof(blockA), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&blockB, sizeof(blockB), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(h1Complete, sizeof(h1Complete), MPI_CHAR, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(h2Complete, sizeof(h2Complete), MPI_CHAR, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        printf("Se recibio en %d los strings: %s y %s desde el proceso %d.\n", rank, h1Complete, h2Complete, (rank-1));
-
-        char h1[blockA], h2[blockB];
-        getSubStr(h1, h1Complete, blockA);
+        char h2[blockB];
         getSubStr(h2, h2Complete, blockB);
 
         if(rank < (size-1))
         {
             MPI_Send(&blockA, sizeof(blockA), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
-            MPI_Send(&blockA, sizeof(blockA), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
+            MPI_Send(&blockB, sizeof(blockB), MPI_INT, (rank+1), 0, MPI_COMM_WORLD);
             MPI_Send(h1Complete, sizeof(h1Complete), MPI_CHAR, (rank+1), 0, MPI_COMM_WORLD);
             MPI_Send(h2Complete, sizeof(h2Complete), MPI_CHAR, (rank+1), 0, MPI_COMM_WORLD);
         }
+
+        needlemanWunsch(h1Complete, h2, rank, size, blockA);
     }
 
     MPI_Finalize();

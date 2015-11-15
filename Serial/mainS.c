@@ -43,11 +43,19 @@ int needleman_Wunsch(char h1[], char h2[])
     {
         for(j = 1; j < length2; j++)
         {
-            match = F[i-1][j-1] + (h1[i] == h2[j] ? 1 : -1);
+            match = F[i-1][j-1] + (h1[i-1] == h2[j-1] ? 1 : -1);
             insert = F[i-1][j] - 1;
             erase = F[i][j-1] - 1;
             F[i][j] = max(match, insert, erase);
         }
+    }
+
+    for(i = 0; i < length1; i++)
+    {
+        for(j = 0; j < length2; j++)
+            printf("%d | ", F[i][j]);
+
+        printf("\n");
     }
 
     return F[length1-1][length2-1];
