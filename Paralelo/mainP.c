@@ -154,6 +154,9 @@ void needlemanWunsch(char h1[], char h2[], int rank, int size, int blockA)
             printf("\n");
         }
 
+        if(rank == (size-1))
+            printf("El resultado es: %d.\n\n", F[length1-1][length2-1]);
+
 
         // MPI_Recv(&j, sizeof(j), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         // MPI_Recv(reference, sizeof(reference), MPI_INT, (rank-1), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
