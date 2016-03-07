@@ -65,6 +65,12 @@ int main(int argc, char *argv[])
 {
     char h1[MAX_CHAR_SIZE], h2[MAX_CHAR_SIZE];
     int answer = 0;
+    
+    if(argc < 2)
+    {
+        printf("No se han ingresado todos los parametros.\n");
+        return 1;
+    }
 
     readFile(h1, argv[1]);
     readFile(h2, argv[2]);
